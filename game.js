@@ -55,10 +55,16 @@ class Actor {
 
 class Level {
   constructor(grid = [], actors = []) {
+    // здесь можно создать копии массивов,
+    // чтобы поля обхекта нельзя было изменить извне
     this.grid = grid;
     this.actors = actors;
     this.player = this.actors.find(actor => actor.type === 'player');
     this.height = this.grid.length;
+    // лучше избегать имён переменных вроде a и b
+    // тут подошло бы acc (часто используется как название
+    // первого аргумента функции обратного вызова передаваемой в reduce)
+    // и, например, line
     this.width = this.grid.reduce((a, b) => {
       return b.length > a ? b.length : a;
     }, 0);
@@ -66,6 +72,10 @@ class Level {
     this.finishDelay = 1;
   }
   isFinished() {
+    // если выражение в if имеет значене true или false,
+    // а внутри return, то можно писать просто
+    // return <выражение>
+    // !(this.status === null) - тут лушче просто использовать оператор "не равно"
     if (!(this.status === null) && (this.finishDelay < 0)) {
       return true;
     } else {
@@ -81,6 +91,8 @@ class Level {
         throw (`Расположение, и размер должны быть объектом Vector`)
       }
     } catch (e) {
+      // съедаете ошибку,
+      // вообще тут не нужен try/catch
       console.log(e);
     }
     const left = Math.floor(pos.x);
@@ -90,6 +102,7 @@ class Level {
 
     if (bottom > this.height) {
       return 'lava';
+    // в if return, поэтому else можно не писать
     } else if (left < 0 || right > this.width || top < 0) {
       return "wall";
     }
@@ -127,17 +140,21 @@ class Level {
 
 class LevelParser {
   constructor(dictionary = {}) {
+    // здесь можно создать копию объекта,
+    // чтобы нельзя было изменить поле извне
     this.dictionary = dictionary;
   }
   actorFromSymbol(symbol) {
     return this.dictionary[symbol];
   }
   obstacleFromSymbol(symbol) {
+    // фигурные скобки лучше не опускать
     if (symbol === "x") return "wall"
     if (symbol === "!") return "lava"
   }
   createGrid(strings) {
     const grid = [];
+    // лучше переделать на map
     strings.forEach((string) => {
       let str = string.split('');
       const elements = [];
@@ -150,6 +167,7 @@ class LevelParser {
   }
   createActors(strings) {
     const actors = [];
+    // здесь можно использовать reduce
     strings.forEach((string, y) => {
       let str = string.split('');
       str.forEach((symbol, x) => {
@@ -177,14 +195,18 @@ class Fireball extends Actor {
     return 'fireball';
   }
   getNextPosition(time = 1) {
+    // тут лучше использовать методы класса Vector
     return new Vector(this.pos.x + (this.speed.x * time), this.pos.y + (this.speed.y * time))
   }
   handleObstacle() {
+    // лучше не мутировать объекты класса Vector
+    // + тут тоже можно использовать метод этого класса
     this.speed.x = -this.speed.x;
     this.speed.y = -this.speed.y;
   }
   act(time, level) {
     const newPosition = this.getNextPosition(time);
+    // в данном случае тренарный оператор сравнения затрудные чтение
     level.obstacleAt(newPosition, this.size) ? this.handleObstacle() : this.pos = newPosition;
   }
 }
