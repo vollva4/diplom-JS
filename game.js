@@ -1,6 +1,6 @@
 'use strict';
 class Vector {
-  constructor(x=0, y=0) {
+  constructor(x = 0, y = 0) {
     this.x = x;
     this.y = y;
   }
@@ -11,18 +11,18 @@ class Vector {
     return new Vector(this.x + vector.x, this.y + vector.y);
   }
   times(num) {
-    return new Vector (this.x * num, this.y * num);
+    return new Vector(this.x * num, this.y * num);
   }
 }
 
 class Actor {
-  constructor(pos = new Vector(0, 0), size = new Vector(1, 1), speed = new Vector(0, 0) ) {
+  constructor(pos = new Vector(0, 0), size = new Vector(1, 1), speed = new Vector(0, 0)) {
     if (!(pos instanceof Vector) || !(size instanceof Vector) || !(speed instanceof Vector)) {
       throw new Error(`Расположение, размер и скорость должны быть объектом Vector`);
     }
-  this.pos = pos;
-  this.size = size;
-  this.speed = speed;
+    this.pos = pos;
+    this.size = size;
+    this.speed = speed;
   }
   act() {
 
@@ -51,13 +51,13 @@ class Actor {
     }
     return this.right > actor.left && this.left < actor.right && this.top < actor.bottom && this.bottom > actor.top;
   }
-} 
+}
 
 class Level {
-  constructor(grid = [], actors= []){
+  constructor(grid = [], actors = []) {
     this.grid = grid;
     this.actors = actors;
-    this.player = this.actors.find(actor => actor.type ==='player');
+    this.player = this.actors.find(actor => actor.type === 'player');
     this.height = this.grid.length;
     this.width = this.grid.reduce((a, b) => {
       return b.length > a ? b.length : a;
@@ -76,12 +76,11 @@ class Level {
     return this.actors.find(act => actor.isIntersect(act));
   }
   obstacleAt(pos, size) {
-    try{
+    try {
       if (!(pos instanceof Vector) || !(size instanceof Vector)) {
         throw (`Расположение, и размер должны быть объектом Vector`)
       }
-    }
-    catch(e) {
+    } catch (e) {
       console.log(e);
     }
     const left = Math.floor(pos.x);
@@ -145,7 +144,7 @@ class LevelParser {
       str.forEach((symbol) => {
         elements.push(this.obstacleFromSymbol(symbol));
       });
-      grid.push(elements); 
+      grid.push(elements);
     });
     return grid;
   }
@@ -270,11 +269,11 @@ const schemas = [
   ]
 ];
 const actorDict = {
-    '@': Player,
-    'v': FireRain,
-    'o': Coin,
-    '=': HorizontalFireball,
-    '|': VerticalFireball
+  '@': Player,
+  'v': FireRain,
+  'o': Coin,
+  '=': HorizontalFireball,
+  '|': VerticalFireball
 
 };
 const parser = new LevelParser(actorDict);
