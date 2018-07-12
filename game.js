@@ -55,33 +55,25 @@ class Actor {
 
 class Level {
   constructor(grid = [], actors = []) {
-    this.grid = grid;
-    this.actors = actors;
+    this.grid = grid.slice();
+    this.actors = actors.slice();
     this.player = this.actors.find(actor => actor.type === 'player');
     this.height = this.grid.length;
-    this.width = this.grid.reduce((a, b) => {
-      return b.length > a ? b.length : a;
+    this.width = this.grid.reduce((acc, line) => {
+      return line.length > acc ? line.length : acc;
     }, 0);
     this.status = null;
     this.finishDelay = 1;
   }
   isFinished() {
-    if (!(this.status === null) && (this.finishDelay < 0)) {
-      return true;
-    } else {
-      return false;
-    }
+    return (this.status != null) && (this.finishDelay < 0)
   }
   actorAt(actor) {
     return this.actors.find(act => actor.isIntersect(act));
   }
   obstacleAt(pos, size) {
-    try {
-      if (!(pos instanceof Vector) || !(size instanceof Vector)) {
-        throw (`Расположение, и размер должны быть объектом Vector`)
-      }
-    } catch (e) {
-      console.log(e);
+    if (!(pos instanceof Vector) || !(size instanceof Vector)) {
+      throw new Error('Можно передавать только объекты типа Vector');
     }
     const left = Math.floor(pos.x);
     const right = Math.ceil(pos.x + size.x);
@@ -90,7 +82,9 @@ class Level {
 
     if (bottom > this.height) {
       return 'lava';
-    } else if (left < 0 || right > this.width || top < 0) {
+    } 
+
+    if (left < 0 || right > this.width || top < 0) {
       return "wall";
     }
 
@@ -127,43 +121,36 @@ class Level {
 
 class LevelParser {
   constructor(dictionary = {}) {
-    this.dictionary = dictionary;
+    this.dictionary = Object.assign({}, dictionary);
   }
   actorFromSymbol(symbol) {
     return this.dictionary[symbol];
   }
   obstacleFromSymbol(symbol) {
-    if (symbol === "x") return "wall"
-    if (symbol === "!") return "lava"
+    if (symbol === "x") {
+      return "wall"
+    }
+    if (symbol === "!") {
+      return "lava"
+    }  
   }
-  createGrid(strings) {
-    const grid = [];
-    strings.forEach((string) => {
-      let str = string.split('');
-      const elements = [];
-      str.forEach((symbol) => {
-        elements.push(this.obstacleFromSymbol(symbol));
-      });
-      grid.push(elements);
-    });
-    return grid;
+  createGrid(plan) {
+    return plan.map(line => line.split('')).map(symbol => symbol.map(symbol => this.obstacleFromSymbol(symbol)));  
   }
   createActors(strings) {
-    const actors = [];
-    strings.forEach((string, y) => {
-      let str = string.split('');
-      str.forEach((symbol, x) => {
-        if (typeof this.actorFromSymbol(symbol) === 'function') {
-          let Constr = Object(this.actorFromSymbol(symbol))
-          let obj = new Constr(new Vector(x, y))
-          if (obj instanceof Actor) {
-            actors.push(obj)
-          }
-        }
-      });
-    });
-    return actors
-  }
+        return strings.reduce((prev, string, y) => {
+            string.split('').forEach((symbol, x) => {
+                const func = this.actorFromSymbol(symbol);
+                if (typeof func === 'function') {
+                    const actor = new func(new Vector(x, y));
+                    if (actor instanceof Actor) {
+                        prev.push(actor);
+                    }
+                }
+            });
+            return prev;
+        }, []);
+    }
   parse(strings) {
     return new Level(this.createGrid(strings), this.createActors(strings));
   }
@@ -177,15 +164,18 @@ class Fireball extends Actor {
     return 'fireball';
   }
   getNextPosition(time = 1) {
-    return new Vector(this.pos.x + (this.speed.x * time), this.pos.y + (this.speed.y * time))
+    return this.pos.plus(this.speed.times(time));
   }
   handleObstacle() {
-    this.speed.x = -this.speed.x;
-    this.speed.y = -this.speed.y;
+    this.speed = this.speed.times(-1);
   }
   act(time, level) {
     const newPosition = this.getNextPosition(time);
-    level.obstacleAt(newPosition, this.size) ? this.handleObstacle() : this.pos = newPosition;
+    if (!level.obstacleAt(newPosition, this.size)) {
+      this.pos = newPosition;
+    } else {
+      this.handleObstacle();
+    }
   }
 }
 
